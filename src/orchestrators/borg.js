@@ -8,7 +8,6 @@ class BorgOrchestrator {
   async deployContainer(spec) {
     console.log('Deploying container to Borg...');
     try {
-      // Handle Borg-specific deployment
       await this.validateSpec(spec);
       return { status: 'deployed', containerId: this.generateId() };
     } catch (error) {
