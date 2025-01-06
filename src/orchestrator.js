@@ -1,22 +1,35 @@
 class WorkflowOrchestrator {
   constructor(config) {
+    if (!config) throw new Error('Config is required');
     this.config = config;
     this.services = ['vetestx', 'openai', 'jenkins'];
   }
 
+  async initializeService(service) {
+    console.log(`Initializing ${service}...`);
+    if (!this.config[service]) {
+      throw new Error(`Missing config for ${service}`);
+    }
+    // Add service-specific initialization
+    return true;
+  }
+
+  async monitorService(service) {
+    console.log(`Monitoring ${service}...`);
+    try {
+      // Add service-specific monitoring
+      return { service, status: 'healthy' };
+    } catch (error) {
+      return { service, status: 'error', error: error.message };
+    }
+  }
+
   async orchestrateWorkflow() {
     console.log('Starting workflow orchestration...');
-    
     try {
-      // Initialize services
       await this.initializeServices();
-      
-      // Run test pipeline
       await this.runPipeline();
-      
-      // Monitor and report
       await this.monitorServices();
-      
       return { status: 'success' };
     } catch (error) {
       console.error('Workflow failed:', error);
@@ -32,15 +45,13 @@ class WorkflowOrchestrator {
 
   async runPipeline() {
     const pipeline = require('./pipeline');
-    await pipeline.runTestPipeline();
+    return await pipeline.runTestPipeline();
   }
 
   async monitorServices() {
-    // Set up monitoring for all services
     const monitors = this.services.map(service => 
       this.monitorService(service)
     );
-    
     return Promise.all(monitors);
   }
 }
