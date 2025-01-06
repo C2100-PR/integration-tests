@@ -1,0 +1,14 @@
+{
+  "vetestx": {
+    "baseUrl": "process.env.VETESTX_URL",
+    "timeout": 30000
+  },
+  "openai": {
+    "model": "gpt-4",
+    "timeout": 60000
+  },
+  "jenkins": {
+    "pipeline": "integration-tests",
+    "timeout": 300000
+  }
+}
