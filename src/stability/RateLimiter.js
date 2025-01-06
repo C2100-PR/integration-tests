@@ -2,50 +2,36 @@ class RateLimiter {
   constructor(options = {}) {
     this.maxRequests = options.maxRequests || 100;
     this.timeWindow = options.timeWindow || 60000; // 1 minute
-    this.requests = new Map();
+    this.requests = new Map(); // timestamp -> count
   }
 
-  async checkLimit(serviceId) {
+  async acquire() {
     this.cleanup();
-    
     const now = Date.now();
-    const serviceRequests = this.requests.get(serviceId) || [];
-    
-    // Remove old requests
-    const validRequests = serviceRequests.filter(time => 
-      now - time < this.timeWindow
-    );
+    const currentCount = this.getCurrentRequestCount();
 
-    if (validRequests.length >= this.maxRequests) {
-      throw new Error(`Rate limit exceeded for ${serviceId}`);
+    if (currentCount >= this.maxRequests) {
+      throw new Error('Rate limit exceeded');
     }
 
-    // Add new request
-    validRequests.push(now);
-    this.requests.set(serviceId, validRequests);
+    this.requests.set(now, (this.requests.get(now) || 0) + 1);
+  }
 
-    return {
-      remaining: this.maxRequests - validRequests.length,
-      reset: now + this.timeWindow
-    };
+  getCurrentRequestCount() {
+    let count = 0;
+    for (const [timestamp, requestCount] of this.requests) {
+      count += requestCount;
+    }
+    return count;
   }
 
   cleanup() {
-    const now = Date.now();
-    for (const [serviceId, requests] of this.requests.entries()) {
-      const validRequests = requests.filter(time => 
-        now - time < this.timeWindow
-      );
-      if (validRequests.length === 0) {
-        this.requests.delete(serviceId);
-      } else {
-        this.requests.set(serviceId, validRequests);
+    const cutoff = Date.now() - this.timeWindow;
+    for (const [timestamp] of this.requests) {
+      if (timestamp < cutoff) {
+        this.requests.delete(timestamp);
       }
     }
-  }
-
-  reset(serviceId) {
-    this.requests.delete(serviceId);
   }
 }
 
